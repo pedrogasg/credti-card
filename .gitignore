@@ -1,0 +1,30 @@
+*.class
+*.log
+*.cache-main
+# sbt specific
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+project/project/
+project/target/
+# IDE specific
+.scala_dependencies
+.classpath
+*.iml
+.idea/
+.idea_modules/
+.project
+.settings/
+*.sublime-project
+*.sublime-workspace
+/.env
+atlassian-ide-plugin.xml
+
+# Mac OSX specific
+.DS_Store
+
+#ActiveMQ specific
+*.data
