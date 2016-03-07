@@ -47,9 +47,10 @@ object Account {
 	sealed trait RejectionCause
 	case object InactiveAccount extends RejectionCause
 	case object NotCoverOperation extends RejectionCause
+	case object BlockedAccount extends RejectionCause
 	
+	case object UnblockAccount
 	case object BlockAccount
-	case object AccountActivation
 	case class AccountOperation(amount:BigDecimal,`type`:TransactionType)
 }
 
@@ -59,6 +60,7 @@ class Account(val id:String) extends PersistentFSM[Account.AccountState, Account
   override def persistenceId:String = id
   
   def absoluteBalance(balance:BigDecimal,overdraftLimit:BigDecimal) = {
+    println(s"new balance ${balance}")
     if(balance > 0)
       PositiveBalance(balance, overdraftLimit)
     else
@@ -72,15 +74,14 @@ class Account(val id:String) extends PersistentFSM[Account.AccountState, Account
       case AcceptedTransaction(amount,DebitTransaction) =>
         val total = currentFunds.balance - amount
         absoluteBalance(total,currentFunds.overdraftLimit)
-      case RejectedTransaction(_,_) =>
+      case RejectedTransaction(_,reason) =>
+        println(s"rejected ${reason}")
         currentFunds
     }
   }
   override def domainEventClassTag: ClassTag[DomainEvent] = classTag[DomainEvent]
   
   when(Inactive){
-    case Event(AccountActivation,_) =>
-      goto(Active)
     case Event(AccountOperation(amount,CreditTransaction),_) =>
       //stash()
       goto(Active) applying AcceptedTransaction(amount,CreditTransaction)
@@ -97,6 +98,19 @@ class Account(val id:String) extends PersistentFSM[Account.AccountState, Account
         stay applying AcceptedTransaction(amount,DebitTransaction)
       else
         stay applying RejectedTransaction(amount,NotCoverOperation)
+    case Event(BlockAccount,_) => 
+        goto(Blocked)
+    case Event(UnblockAccount,_) =>
+        stay
+  }
+  
+  when(Blocked){
+    case Event(BlockAccount,_) => 
+      stay
+    case Event(UnblockAccount,_) =>
+      goto(Active)
+    case Event(AccountOperation(amount,_),_) =>
+      stay applying RejectedTransaction(amount,BlockedAccount)
   }
   
   onTransition {
