@@ -5,6 +5,7 @@ import akka.persistence.fsm._
 import akka.persistence.fsm.PersistentFSM.FSMState
 import akka.persistence.fsm.PersistentFSM
 import akka.actor.Stash
+import akka.actor.Props
 
 object Account {
   // States 
@@ -42,6 +43,7 @@ object Account {
 	sealed trait TransactionType
 	case object CreditTransaction extends TransactionType
 	case object DebitTransaction extends TransactionType
+	
 	// Rejection Cause
 	
 	sealed trait RejectionCause
@@ -49,9 +51,14 @@ object Account {
 	case object NotCoverOperation extends RejectionCause
 	case object BlockedAccount extends RejectionCause
 	
+	// Operation
+	
 	case object UnblockAccount
 	case object BlockAccount
 	case class AccountOperation(amount:BigDecimal,`type`:TransactionType)
+	
+	// Constructor
+	def props(id:String) = Props(new Account(id))
 }
 
 class Account(val id:String) extends PersistentFSM[Account.AccountState, Account.Funds,Account.DomainEvent] with Stash{

@@ -7,7 +7,7 @@ object CreditCardApp extends App {
   
   val system = ActorSystem("fist-acount-test")
   
-  val account = system.actorOf(Props(new Account("test-id")))
+  val account = system.actorOf(Account.props("test-id2"))
   
   account ! AccountOperation(100,CreditTransaction)
   account ! AccountOperation(100,DebitTransaction)
